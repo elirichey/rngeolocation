@@ -9,6 +9,7 @@ import {
   Linking,
   Alert,
   Text,
+  Button,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 
@@ -16,24 +17,25 @@ export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      forceLocation: true,
+      highAccuracy: true,
+      loading: false,
+      showLocationDialog: true,
+      significantChanges: false,
+      updatesEnabled: true,
+      foregroundService: false,
+      location: {},
+      // Testing
       permissions: false,
-      location: null,
     };
   }
 
   componentDidMount() {
-    if (this.hasLocationPermission) {
-      Geolocation.getCurrentPosition(
-        (position) => {
-          console.log(position);
-        },
-        (error) => {
-          // See error code charts below.
-          console.log(error.code, error.message);
-        },
-        {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-      );
-    }
+    this.getLocation();
+  }
+
+  componentWillUnmount() {
+    this.removeLocationUpdates();
   }
 
   /************************************ PERMISSIONS ************************************/
@@ -44,10 +46,10 @@ export default class App extends Component {
         Alert.alert('Unable to open settings');
       });
     };
-
     const status = await Geolocation.requestAuthorization('whenInUse');
 
     if (status === 'granted') {
+      this.setState({permissions: true});
       return true;
     }
 
@@ -57,7 +59,7 @@ export default class App extends Component {
 
     if (status === 'disabled') {
       Alert.alert(
-        `Turn on Location Services to allow "App" to determine your location.`,
+        `Turn on Location Services to allow "Geolocation App" to determine your location.`,
         '',
         [
           {text: 'Go to Settings', onPress: openSetting},
@@ -72,9 +74,6 @@ export default class App extends Component {
   hasLocationPermission = async () => {
     if (Platform.OS === 'ios') {
       const hasPermission = await this.hasLocationPermissionIOS();
-
-      this.setState({permissions: true});
-
       return hasPermission;
     }
 
@@ -113,10 +112,121 @@ export default class App extends Component {
     return false;
   };
 
+  /************************************ GEOLOCATION CALLS ************************************/
+
+  getLocation = async () => {
+    const hasLocationPermission = await this.hasLocationPermission();
+
+    if (!hasLocationPermission) {
+      return;
+    }
+
+    this.setState({loading: true}, () => {
+      Geolocation.getCurrentPosition(
+        (position) => {
+          this.setState({location: position, loading: false});
+          console.log(' getLocation_POSITION: ', position);
+        },
+        (error) => {
+          this.setState({loading: false});
+          Alert.alert(`Code ${error.code}`, error.message);
+          console.log('getLocation_POSITION: ', error);
+        },
+        {
+          accuracy: {
+            android: 'high',
+            ios: 'best',
+          },
+          enableHighAccuracy: this.state.highAccuracy,
+          timeout: 15000,
+          maximumAge: 10000,
+          distanceFilter: 0,
+          forceRequestLocation: this.state.forceLocation,
+          showLocationDialog: this.state.showLocationDialog,
+        },
+      );
+    });
+  };
+
+  getLocationUpdates = async () => {
+    const hasLocationPermission = await this.hasLocationPermission();
+
+    if (!hasLocationPermission) {
+      return;
+    }
+
+    if (Platform.OS === 'android' && this.state.foregroundService) {
+      await this.startForegroundService();
+    }
+
+    this.setState({updatesEnabled: true}, () => {
+      this.watchId = Geolocation.watchPosition(
+        (position) => {
+          this.setState({location: position});
+          console.log(' getLocationUpdates_POSITION: ', position);
+        },
+        (error) => {
+          console.log('getLocationUpdates_POSITION:', error);
+        },
+        {
+          accuracy: {
+            android: 'high',
+            ios: 'best',
+          },
+          enableHighAccuracy: this.state.highAccuracy,
+          distanceFilter: 0,
+          interval: 5000,
+          fastestInterval: 2000,
+          forceRequestLocation: this.state.forceLocation,
+          showLocationDialog: this.state.showLocationDialog,
+          useSignificantChanges: this.state.significantChanges,
+        },
+      );
+    });
+  };
+  removeLocationUpdates = () => {
+    if (this.watchId !== null) {
+      this.stopForegroundService();
+      Geolocation.clearWatch(this.watchId);
+      this.watchId = null;
+      this.setState({updatesEnabled: false});
+    }
+  };
+
+  startForegroundService = async () => {
+    if (Platform.Version >= 26) {
+      await VIForegroundService.createNotificationChannel({
+        id: 'locationChannel',
+        name: 'Location Tracking Channel',
+        description: 'Tracks location of user',
+        enableVibration: false,
+      });
+    }
+
+    return VIForegroundService.startService({
+      channelId: 'locationChannel',
+      id: 420,
+      title: appConfig.displayName,
+      text: 'Tracking location updates',
+      icon: 'ic_launcher',
+    });
+  };
+  stopForegroundService = () => {
+    if (this.state.foregroundService) {
+      VIForegroundService.stopService().catch((err) => err);
+    }
+  };
+
+  setAccuracy = (value) => this.setState({highAccuracy: value});
+  setSignificantChange = (value) => this.setState({significantChanges: value});
+  setLocationDialog = (value) => this.setState({showLocationDialog: value});
+  setForceLocation = (value) => this.setState({forceLocation: value});
+  setForegroundService = (value) => this.setState({foregroundService: value});
+
   /************************************ RENDERS ************************************/
 
   render() {
-    let {permissions} = this.state;
+    let {permissions, location, updatesEnabled} = this.state;
 
     return (
       <View style={styles.container}>
@@ -125,6 +235,19 @@ export default class App extends Component {
         <Text style={styles.text}>
           Permissions: {permissions ? 'True' : 'False'}
         </Text>
+
+        <View style={styles.buttons}>
+          <Button
+            title="Start Observing"
+            onPress={this.getLocationUpdates}
+            disabled={updatesEnabled}
+          />
+          <Button
+            title="Stop Observing"
+            onPress={this.removeLocationUpdates}
+            disabled={!updatesEnabled}
+          />
+        </View>
       </View>
     );
   }
