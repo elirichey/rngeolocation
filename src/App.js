@@ -230,6 +230,7 @@ export default class App extends Component {
 
   render() {
     let {
+      permissions,
       forceLocation,
       highAccuracy,
       loading,
@@ -322,45 +323,17 @@ export default class App extends Component {
                 ? new Date(location.timestamp).toLocaleString()
                 : ''}
             </Text>
+            <Text>
+              Has Geolocation Permissions: {permissions ? 'True' : 'False'}
+            </Text>
           </View>
         </ScrollView>
-        {/*
-        <Text style={styles.text}>
-          Permissions: {permissions ? 'True' : 'False'}
-        </Text>
-
-        <View style={styles.buttons}>
-          <Button
-            title="Start Observing"
-            onPress={this.getLocationUpdates}
-            disabled={updatesEnabled}
-          />
-          <Button
-            title="Stop Observing"
-            onPress={this.removeLocationUpdates}
-            disabled={!updatesEnabled}
-          />
-        </View>
-        */}
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  /*
-  container: {
-    flex: 1,
-    flexDirection: 'column',
-    //backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    color: '#FFFFFF',
-  },
-  */
-
   mainContainer: {
     flex: 1,
   },
