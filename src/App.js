@@ -220,6 +220,8 @@ export default class App extends Component {
     }
   };
 
+  /************************************ GEOLOCATION CONTROLS ************************************/
+
   setAccuracy = (value) => this.setState({highAccuracy: value});
   setSignificantChange = (value) => this.setState({significantChanges: value});
   setLocationDialog = (value) => this.setState({showLocationDialog: value});

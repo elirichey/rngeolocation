@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {Fragment, useEffect, useRef} from 'react';
 import {View, StyleSheet} from 'react-native';
 import RNMapView, {Circle, Marker} from 'react-native-maps';
 
@@ -39,7 +39,7 @@ export default function MapView({coords}) {
         style={StyleSheet.absoluteFillObject}
         rotateEnabled={false}>
         {!!coords && (
-          <>
+          <Fragment>
             <Marker
               anchor={{x: 0.5, y: 0.6}}
               coordinate={{
@@ -61,6 +61,7 @@ export default function MapView({coords}) {
                 <View style={styles.dot} />
               </View>
             </Marker>
+
             <Circle
               center={{
                 latitude: coords.latitude,
@@ -70,7 +71,7 @@ export default function MapView({coords}) {
               strokeColor="rgba(0, 150, 255, 0.5)"
               fillColor="rgba(0, 150, 255, 0.5)"
             />
-          </>
+          </Fragment>
         )}
       </RNMapView>
     </View>
