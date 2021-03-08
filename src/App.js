@@ -8,10 +8,13 @@ import {
   ToastAndroid,
   Linking,
   Alert,
+  Switch,
+  ScrollView,
   Text,
   Button,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
+import MapView from './MapView';
 
 export default class App extends Component {
   constructor(props) {
@@ -226,12 +229,102 @@ export default class App extends Component {
   /************************************ RENDERS ************************************/
 
   render() {
-    let {permissions, location, updatesEnabled} = this.state;
+    let {
+      forceLocation,
+      highAccuracy,
+      loading,
+      location,
+      showLocationDialog,
+      significantChanges,
+      updatesEnabled,
+      foregroundService,
+    } = this.state;
 
     return (
       <View style={styles.container}>
         <StatusBar hidden={true} />
-        <Text style={styles.text}>Current Location</Text>
+        <MapView coords={location.coords || null} />
+
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}>
+          <View>
+            <View style={styles.option}>
+              <Text>Enable High Accuracy</Text>
+              <Switch onValueChange={this.setAccuracy} value={highAccuracy} />
+            </View>
+
+            {Platform.OS === 'ios' && (
+              <View style={styles.option}>
+                <Text>Use Significant Changes</Text>
+                <Switch
+                  onValueChange={this.setSignificantChange}
+                  value={significantChanges}
+                />
+              </View>
+            )}
+
+            {Platform.OS === 'android' && (
+              <>
+                <View style={styles.option}>
+                  <Text>Show Location Dialog</Text>
+                  <Switch
+                    onValueChange={this.setLocationDialog}
+                    value={showLocationDialog}
+                  />
+                </View>
+                <View style={styles.option}>
+                  <Text>Force Location Request</Text>
+                  <Switch
+                    onValueChange={this.setForceLocation}
+                    value={forceLocation}
+                  />
+                </View>
+                <View style={styles.option}>
+                  <Text>Enable Foreground Service</Text>
+                  <Switch
+                    onValueChange={this.setForegroundService}
+                    value={foregroundService}
+                  />
+                </View>
+              </>
+            )}
+          </View>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Get Location"
+              onPress={this.getLocation}
+              disabled={loading || updatesEnabled}
+            />
+            <View style={styles.buttons}>
+              <Button
+                title="Start Observing"
+                onPress={this.getLocationUpdates}
+                disabled={updatesEnabled}
+              />
+              <Button
+                title="Stop Observing"
+                onPress={this.removeLocationUpdates}
+                disabled={!updatesEnabled}
+              />
+            </View>
+          </View>
+          <View style={styles.result}>
+            <Text>Latitude: {location?.coords?.latitude || ''}</Text>
+            <Text>Longitude: {location?.coords?.longitude || ''}</Text>
+            <Text>Heading: {location?.coords?.heading}</Text>
+            <Text>Accuracy: {location?.coords?.accuracy}</Text>
+            <Text>Altitude: {location?.coords?.altitude}</Text>
+            <Text>Speed: {location?.coords?.speed}</Text>
+            <Text>
+              Timestamp:{' '}
+              {location.timestamp
+                ? new Date(location.timestamp).toLocaleString()
+                : ''}
+            </Text>
+          </View>
+        </ScrollView>
+        {/*
         <Text style={styles.text}>
           Permissions: {permissions ? 'True' : 'False'}
         </Text>
@@ -248,20 +341,56 @@ export default class App extends Component {
             disabled={!updatesEnabled}
           />
         </View>
+        */}
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
+  /*
   container: {
     flex: 1,
     flexDirection: 'column',
-    backgroundColor: '#000000',
+    //backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
     color: '#FFFFFF',
+  },
+  */
+
+  mainContainer: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#F5FCFF',
+  },
+  contentContainer: {
+    padding: 12,
+  },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+  },
+  result: {
+    borderWidth: 1,
+    borderColor: '#666',
+    width: '100%',
+    padding: 10,
+  },
+  buttonContainer: {
+    alignItems: 'center',
+  },
+  buttons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginVertical: 12,
+    width: '100%',
   },
 });
