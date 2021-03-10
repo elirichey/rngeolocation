@@ -1,3 +1,4 @@
+/*
 import React, {Fragment, useEffect, useRef} from 'react';
 import {View, StyleSheet} from 'react-native';
 import RNMapView, {Circle, Marker} from 'react-native-maps';
@@ -115,3 +116,4 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgb(0, 120, 255)',
   },
 });
+*/

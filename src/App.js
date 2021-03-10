@@ -14,7 +14,7 @@ import {
   Button,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
-import MapView from './MapView';
+// import MapView from './MapView';
 
 export default class App extends Component {
   constructor(props) {
@@ -246,7 +246,7 @@ export default class App extends Component {
     return (
       <View style={styles.container}>
         <StatusBar hidden={true} />
-        <MapView coords={location.coords || null} />
+        {/* <MapView coords={location.coords || null} /> */}
 
         <ScrollView
           style={styles.container}
