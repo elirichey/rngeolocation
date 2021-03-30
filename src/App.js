@@ -44,12 +44,12 @@ export default class App extends Component {
   /************************************ PERMISSIONS ************************************/
 
   hasLocationPermissionIOS = async () => {
-    const openSetting = () => {
+    let openSetting = () => {
       Linking.openSettings().catch(() => {
         Alert.alert('Unable to open settings');
       });
     };
-    const status = await Geolocation.requestAuthorization('whenInUse');
+    let status = await Geolocation.requestAuthorization('whenInUse');
 
     if (status === 'granted') {
       this.setState({permissions: true});
@@ -76,7 +76,7 @@ export default class App extends Component {
 
   hasLocationPermission = async () => {
     if (Platform.OS === 'ios') {
-      const hasPermission = await this.hasLocationPermissionIOS();
+      let hasPermission = await this.hasLocationPermissionIOS();
       return hasPermission;
     }
 
@@ -84,7 +84,7 @@ export default class App extends Component {
       return true;
     }
 
-    const hasPermission = await PermissionsAndroid.check(
+    let hasPermission = await PermissionsAndroid.check(
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     );
 
@@ -92,7 +92,7 @@ export default class App extends Component {
       return true;
     }
 
-    const status = await PermissionsAndroid.request(
+    let status = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     );
 
@@ -118,7 +118,7 @@ export default class App extends Component {
   /************************************ GEOLOCATION CALLS ************************************/
 
   getLocation = async () => {
-    const hasLocationPermission = await this.hasLocationPermission();
+    let hasLocationPermission = await this.hasLocationPermission();
 
     if (!hasLocationPermission) {
       return;
@@ -152,7 +152,7 @@ export default class App extends Component {
   };
 
   getLocationUpdates = async () => {
-    const hasLocationPermission = await this.hasLocationPermission();
+    let hasLocationPermission = await this.hasLocationPermission();
 
     if (!hasLocationPermission) {
       return;

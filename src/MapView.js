@@ -4,7 +4,7 @@ import {View, StyleSheet} from 'react-native';
 import RNMapView, {Circle, Marker} from 'react-native-maps';
 
 export default function MapView({coords}) {
-  const mapRef = useRef(null);
+  let mapRef = useRef(null);
 
   useEffect(() => {
     if (!!coords && mapRef.current) {
