@@ -14,7 +14,6 @@ import {
   Button,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
-// import MapView from './MapView';
 
 export default class App extends Component {
   constructor(props) {
@@ -56,9 +55,7 @@ export default class App extends Component {
       return true;
     }
 
-    if (status === 'denied') {
-      Alert.alert('Location permission denied');
-    }
+    if (status === 'denied') Alert.alert('Location permission denied');
 
     if (status === 'disabled') {
       Alert.alert(
@@ -80,25 +77,20 @@ export default class App extends Component {
       return hasPermission;
     }
 
-    if (Platform.OS === 'android' && Platform.Version < 23) {
-      return true;
-    }
+    let is_android = Platform.OS === 'android';
+    if (is_android && Platform.Version < 23) return true;
 
     let hasPermission = await PermissionsAndroid.check(
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     );
 
-    if (hasPermission) {
-      return true;
-    }
+    if (hasPermission) return true;
 
     let status = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     );
 
-    if (status === PermissionsAndroid.RESULTS.GRANTED) {
-      return true;
-    }
+    if (status === PermissionsAndroid.RESULTS.GRANTED) return true;
 
     if (status === PermissionsAndroid.RESULTS.DENIED) {
       ToastAndroid.show(
@@ -119,10 +111,7 @@ export default class App extends Component {
 
   getLocation = async () => {
     let hasLocationPermission = await this.hasLocationPermission();
-
-    if (!hasLocationPermission) {
-      return;
-    }
+    if (!hasLocationPermission) return;
 
     this.setState({loading: true}, () => {
       Geolocation.getCurrentPosition(
@@ -153,14 +142,11 @@ export default class App extends Component {
 
   getLocationUpdates = async () => {
     let hasLocationPermission = await this.hasLocationPermission();
+    if (!hasLocationPermission) return;
 
-    if (!hasLocationPermission) {
-      return;
-    }
-
-    if (Platform.OS === 'android' && this.state.foregroundService) {
-      await this.startForegroundService();
-    }
+    let is_android = Platform.OS === 'android';
+    let {foregroundService} = this.state;
+    if (is_android && foregroundService) await this.startForegroundService();
 
     this.setState({updatesEnabled: true}, () => {
       this.watchId = Geolocation.watchPosition(
@@ -246,7 +232,6 @@ export default class App extends Component {
     return (
       <View style={styles.container}>
         <StatusBar hidden={true} />
-        {/* <MapView coords={location.coords || null} /> */}
 
         <ScrollView
           style={styles.container}
@@ -276,6 +261,7 @@ export default class App extends Component {
                     value={showLocationDialog}
                   />
                 </View>
+
                 <View style={styles.option}>
                   <Text>Force Location Request</Text>
                   <Switch
@@ -283,6 +269,7 @@ export default class App extends Component {
                     value={forceLocation}
                   />
                 </View>
+
                 <View style={styles.option}>
                   <Text>Enable Foreground Service</Text>
                   <Switch
@@ -293,12 +280,14 @@ export default class App extends Component {
               </>
             )}
           </View>
+
           <View style={styles.buttonContainer}>
             <Button
               title="Get Location"
               onPress={this.getLocation}
               disabled={loading || updatesEnabled}
             />
+
             <View style={styles.buttons}>
               <Button
                 title="Start Observing"
@@ -312,6 +301,7 @@ export default class App extends Component {
               />
             </View>
           </View>
+
           <View style={styles.result}>
             <Text>Latitude: {location?.coords?.latitude || ''}</Text>
             <Text>Longitude: {location?.coords?.longitude || ''}</Text>
