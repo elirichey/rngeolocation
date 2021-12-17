@@ -309,12 +309,14 @@ export default class App extends Component {
             <Text>Accuracy: {location?.coords?.accuracy}</Text>
             <Text>Altitude: {location?.coords?.altitude}</Text>
             <Text>Speed: {location?.coords?.speed}</Text>
+
             <Text>
               Timestamp:{' '}
               {location.timestamp
                 ? new Date(location.timestamp).toLocaleString()
                 : ''}
             </Text>
+
             <Text>
               Has Geolocation Permissions: {permissions ? 'True' : 'False'}
             </Text>
