@@ -8,11 +8,11 @@ import {
   ToastAndroid,
   Linking,
   Alert,
-  Switch,
   ScrollView,
   Text,
   Button,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 
@@ -20,16 +20,9 @@ export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      forceLocation: true,
-      highAccuracy: true,
       loading: false,
-      showLocationDialog: true,
-      significantChanges: false,
       updatesEnabled: true,
-      foregroundService: false,
       location: {},
-      // Testing
-      permissions: false,
     };
   }
 
@@ -50,14 +43,8 @@ export default class App extends Component {
       });
     };
     let status = await Geolocation.requestAuthorization('whenInUse');
-
-    if (status === 'granted') {
-      this.setState({permissions: true});
-      return true;
-    }
-
+    if (status === 'granted') return true;
     if (status === 'denied') Alert.alert('Location permission denied');
-
     if (status === 'disabled') {
       Alert.alert(
         `Turn on Location Services to allow "Geolocation App" to determine your location.`,
@@ -80,19 +67,11 @@ export default class App extends Component {
 
     let is_android = Platform.OS === 'android';
     if (is_android && Platform.Version < 23) return true;
-
-    let hasPermission = await PermissionsAndroid.check(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-    );
-
+    let android_pem = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
+    let hasPermission = await PermissionsAndroid.check(android_pem);
     if (hasPermission) return true;
-
-    let status = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-    );
-
+    let status = await PermissionsAndroid.request(android_pem);
     if (status === PermissionsAndroid.RESULTS.GRANTED) return true;
-
     if (status === PermissionsAndroid.RESULTS.DENIED) {
       ToastAndroid.show(
         'Location permission denied by user.',
@@ -130,12 +109,12 @@ export default class App extends Component {
             android: 'high',
             ios: 'best',
           },
-          enableHighAccuracy: this.state.highAccuracy,
+          enableHighAccuracy: true,
           timeout: 15000,
           maximumAge: 10000,
           distanceFilter: 0,
-          forceRequestLocation: this.state.forceLocation,
-          showLocationDialog: this.state.showLocationDialog,
+          forceRequestLocation: true,
+          showLocationDialog: true,
         },
       );
     });
@@ -145,92 +124,68 @@ export default class App extends Component {
     let hasLocationPermission = await this.hasLocationPermission();
     if (!hasLocationPermission) return;
 
-    let is_android = Platform.OS === 'android';
-    let {foregroundService} = this.state;
-    // if (is_android && foregroundService) await this.startForegroundService();
-
     this.setState({updatesEnabled: true}, () => {
       this.watchId = Geolocation.watchPosition(
         position => {
           this.setState({location: position});
-          console.log(' getLocationUpdates_POSITION: ', position);
+          console.log(' GetGeoUpdates_POSITION: ', position);
         },
-        error => {
-          console.log('getLocationUpdates_POSITION:', error);
-        },
+        error => console.log('GetGeoUpdates_POSITION:', error),
         {
-          accuracy: {
-            android: 'high',
-            ios: 'best',
-          },
-          enableHighAccuracy: this.state.highAccuracy,
+          accuracy: {android: 'high', ios: 'best'},
+          enableHighAccuracy: true,
           distanceFilter: 0,
           interval: 5000,
           fastestInterval: 2000,
-          forceRequestLocation: this.state.forceLocation,
-          showLocationDialog: this.state.showLocationDialog,
-          useSignificantChanges: this.state.significantChanges,
+          forceRequestLocation: true,
+          showLocationDialog: true,
+          useSignificantChanges: false,
         },
       );
     });
   };
   removeLocationUpdates = () => {
     if (this.watchId !== null) {
-      // this.stopForegroundService();
       Geolocation.clearWatch(this.watchId);
       this.watchId = null;
       this.setState({updatesEnabled: false});
     }
   };
 
-  /*
-  startForegroundService = async () => {
-    if (Platform.Version >= 26) {
-      await VIForegroundService.createNotificationChannel({
-        id: 'locationChannel',
-        name: 'Location Tracking Channel',
-        description: 'Tracks location of user',
-        enableVibration: false,
-      });
-    }
-
-    return VIForegroundService.startService({
-      channelId: 'locationChannel',
-      id: 420,
-      title: appConfig.displayName,
-      text: 'Tracking location updates',
-      icon: 'ic_launcher',
-    });
-  };
-  stopForegroundService = () => {
-    if (this.state.foregroundService) {
-      VIForegroundService.stopService().catch(err => err);
-    }
-  };
-  */
-
-  /************************************ GEOLOCATION CONTROLS ************************************/
-
-  setAccuracy = value => this.setState({highAccuracy: value});
-  setSignificantChange = value => this.setState({significantChanges: value});
-  setLocationDialog = value => this.setState({showLocationDialog: value});
-  setForceLocation = value => this.setState({forceLocation: value});
-  setForegroundService = value => this.setState({foregroundService: value});
-
   /************************************ RENDERS ************************************/
 
+  renderBtnControls = () => {
+    let {updatesEnabled} = this.state;
+
+    return (
+      <View style={styles.buttons_container}>
+        {!updatesEnabled ? (
+          <>
+            <TouchableOpacity
+              onPress={this.getLocation}
+              style={styles.btn_left_container}>
+              <Text style={styles.txt_black}>Get</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={this.getLocationUpdates}
+              style={styles.btn_right_container}>
+              <Text style={styles.txt_black}>Start Watching</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity
+            onPress={this.removeLocationUpdates}
+            style={styles.btn_full_container}>
+            <Text style={styles.txt_black}>Stop Watching</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+
   render() {
-    let {
-      permissions,
-      forceLocation,
-      highAccuracy,
-      loading,
-      location,
-      showLocationDialog,
-      significantChanges,
-      updatesEnabled,
-      foregroundService,
-    } = this.state;
+    let {location, updatesEnabled} = this.state;
 
     return (
       <SafeAreaView style={styles.base_container}>
@@ -239,104 +194,57 @@ export default class App extends Component {
 
           <ScrollView
             style={styles.container}
-            contentContainerStyle={styles.contentContainer}>
-            <View>
-              <View style={styles.option}>
-                <Text style={styles.txt_black}>Enable High Accuracy</Text>
-                <Switch onValueChange={this.setAccuracy} value={highAccuracy} />
-              </View>
+            contentContainerStyle={styles.content_container}>
+            {this.renderBtnControls()}
 
-              {Platform.OS === 'ios' && (
-                <View style={styles.option}>
-                  <Text style={styles.txt_black}>Use Significant Changes</Text>
-                  <Switch
-                    onValueChange={this.setSignificantChange}
-                    value={significantChanges}
-                  />
-                </View>
-              )}
-
-              {Platform.OS === 'android' && (
-                <>
-                  <View style={styles.option}>
-                    <Text style={styles.txt_black}>Show Location Dialog</Text>
-                    <Switch
-                      onValueChange={this.setLocationDialog}
-                      value={showLocationDialog}
-                    />
-                  </View>
-
-                  <View style={styles.option}>
-                    <Text style={styles.txt_black}>Force Location Request</Text>
-                    <Switch
-                      onValueChange={this.setForceLocation}
-                      value={forceLocation}
-                    />
-                  </View>
-
-                  <View style={styles.option}>
-                    <Text style={styles.txt_black}>
-                      Enable Foreground Service
-                    </Text>
-                    <Switch
-                      onValueChange={this.setForegroundService}
-                      value={foregroundService}
-                    />
-                  </View>
-                </>
-              )}
+            <View style={styles.container_line}>
+              <Text style={styles.txt_black}>
+                Geolocation Watcher: {updatesEnabled ? 'On' : 'Off'}
+              </Text>
             </View>
 
-            <View style={styles.buttonContainer}>
-              <Button
-                title="Get Location"
-                onPress={this.getLocation}
-                disabled={loading || updatesEnabled}
-              />
-
-              <View style={styles.buttons}>
-                <Button
-                  title="Start Observing"
-                  onPress={this.getLocationUpdates}
-                  disabled={updatesEnabled}
-                />
-                <Button
-                  title="Stop Observing"
-                  onPress={this.removeLocationUpdates}
-                  disabled={!updatesEnabled}
-                />
-              </View>
-            </View>
-
-            <View style={styles.result}>
+            <View style={styles.empty_container}>
               <Text style={styles.txt_black}>
                 Latitude: {location?.coords?.latitude || ''}
               </Text>
+            </View>
+
+            <View style={styles.empty_container}>
               <Text style={styles.txt_black}>
                 Longitude: {location?.coords?.longitude || ''}
               </Text>
+            </View>
+
+            <View style={styles.empty_container}>
               <Text style={styles.txt_black}>
                 Heading: {location?.coords?.heading}
               </Text>
+            </View>
+
+            <View style={styles.empty_container}>
               <Text style={styles.txt_black}>
                 Accuracy: {location?.coords?.accuracy}
               </Text>
+            </View>
+
+            <View style={styles.empty_container}>
               <Text style={styles.txt_black}>
                 Altitude: {location?.coords?.altitude}
               </Text>
+            </View>
+
+            <View style={styles.empty_container}>
               <Text style={styles.txt_black}>
                 Speed: {location?.coords?.speed}
               </Text>
+            </View>
 
+            <View style={styles.empty_container}>
               <Text style={styles.txt_black}>
                 Timestamp:{' '}
                 {location.timestamp
                   ? new Date(location.timestamp).toLocaleString()
                   : ''}
-              </Text>
-
-              <Text style={styles.txt_black}>
-                Has Geolocation Permissions: {permissions ? 'True' : 'False'}
               </Text>
             </View>
           </ScrollView>
@@ -355,8 +263,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5FCFF',
   },
-  contentContainer: {
-    padding: 12,
+  content_container: {
+    padding: 15,
   },
   option: {
     flexDirection: 'row',
@@ -364,21 +272,51 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 12,
   },
-  result: {
+  border_container: {
     borderWidth: 1,
     borderColor: '#666',
     width: '100%',
-    padding: 10,
+    padding: 12,
   },
-  buttonContainer: {
-    alignItems: 'center',
+  container_line: {
+    width: '100%',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderColor: '#666',
   },
-  buttons: {
+  empty_container: {
+    width: '100%',
+    padding: 12,
+  },
+  buttons_container: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    marginVertical: 12,
-    width: '100%',
+  },
+  btn_left_container: {
+    flex: 1,
+    borderWidth: 1,
+    padding: 12,
+    borderColor: '#666',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btn_right_container: {
+    flex: 1,
+    borderWidth: 1,
+    padding: 12,
+    borderColor: '#666',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 12,
+  },
+  btn_full_container: {
+    flex: 1,
+    borderWidth: 1,
+    padding: 12,
+    borderColor: '#666',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   txt_black: {
     color: '#000000',
