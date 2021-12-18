@@ -147,7 +147,7 @@ export default class App extends Component {
 
     let is_android = Platform.OS === 'android';
     let {foregroundService} = this.state;
-    if (is_android && foregroundService) await this.startForegroundService();
+    // if (is_android && foregroundService) await this.startForegroundService();
 
     this.setState({updatesEnabled: true}, () => {
       this.watchId = Geolocation.watchPosition(
@@ -176,13 +176,14 @@ export default class App extends Component {
   };
   removeLocationUpdates = () => {
     if (this.watchId !== null) {
-      this.stopForegroundService();
+      // this.stopForegroundService();
       Geolocation.clearWatch(this.watchId);
       this.watchId = null;
       this.setState({updatesEnabled: false});
     }
   };
 
+  /*
   startForegroundService = async () => {
     if (Platform.Version >= 26) {
       await VIForegroundService.createNotificationChannel({
@@ -206,6 +207,7 @@ export default class App extends Component {
       VIForegroundService.stopService().catch(err => err);
     }
   };
+  */
 
   /************************************ GEOLOCATION CONTROLS ************************************/
 
@@ -240,13 +242,13 @@ export default class App extends Component {
             contentContainerStyle={styles.contentContainer}>
             <View>
               <View style={styles.option}>
-                <Text>Enable High Accuracy</Text>
+                <Text style={styles.txt_black}>Enable High Accuracy</Text>
                 <Switch onValueChange={this.setAccuracy} value={highAccuracy} />
               </View>
 
               {Platform.OS === 'ios' && (
                 <View style={styles.option}>
-                  <Text>Use Significant Changes</Text>
+                  <Text style={styles.txt_black}>Use Significant Changes</Text>
                   <Switch
                     onValueChange={this.setSignificantChange}
                     value={significantChanges}
@@ -257,7 +259,7 @@ export default class App extends Component {
               {Platform.OS === 'android' && (
                 <>
                   <View style={styles.option}>
-                    <Text>Show Location Dialog</Text>
+                    <Text style={styles.txt_black}>Show Location Dialog</Text>
                     <Switch
                       onValueChange={this.setLocationDialog}
                       value={showLocationDialog}
@@ -265,7 +267,7 @@ export default class App extends Component {
                   </View>
 
                   <View style={styles.option}>
-                    <Text>Force Location Request</Text>
+                    <Text style={styles.txt_black}>Force Location Request</Text>
                     <Switch
                       onValueChange={this.setForceLocation}
                       value={forceLocation}
@@ -273,7 +275,9 @@ export default class App extends Component {
                   </View>
 
                   <View style={styles.option}>
-                    <Text>Enable Foreground Service</Text>
+                    <Text style={styles.txt_black}>
+                      Enable Foreground Service
+                    </Text>
                     <Switch
                       onValueChange={this.setForegroundService}
                       value={foregroundService}
@@ -305,21 +309,33 @@ export default class App extends Component {
             </View>
 
             <View style={styles.result}>
-              <Text>Latitude: {location?.coords?.latitude || ''}</Text>
-              <Text>Longitude: {location?.coords?.longitude || ''}</Text>
-              <Text>Heading: {location?.coords?.heading}</Text>
-              <Text>Accuracy: {location?.coords?.accuracy}</Text>
-              <Text>Altitude: {location?.coords?.altitude}</Text>
-              <Text>Speed: {location?.coords?.speed}</Text>
+              <Text style={styles.txt_black}>
+                Latitude: {location?.coords?.latitude || ''}
+              </Text>
+              <Text style={styles.txt_black}>
+                Longitude: {location?.coords?.longitude || ''}
+              </Text>
+              <Text style={styles.txt_black}>
+                Heading: {location?.coords?.heading}
+              </Text>
+              <Text style={styles.txt_black}>
+                Accuracy: {location?.coords?.accuracy}
+              </Text>
+              <Text style={styles.txt_black}>
+                Altitude: {location?.coords?.altitude}
+              </Text>
+              <Text style={styles.txt_black}>
+                Speed: {location?.coords?.speed}
+              </Text>
 
-              <Text>
+              <Text style={styles.txt_black}>
                 Timestamp:{' '}
                 {location.timestamp
                   ? new Date(location.timestamp).toLocaleString()
                   : ''}
               </Text>
 
-              <Text>
+              <Text style={styles.txt_black}>
                 Has Geolocation Permissions: {permissions ? 'True' : 'False'}
               </Text>
             </View>
@@ -363,5 +379,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 12,
     width: '100%',
+  },
+  txt_black: {
+    color: '#000000',
   },
 });
